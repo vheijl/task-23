@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Pokedex</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script>
+        $(() => {
+            const minPokemonId = 1;
+            const maxPokemonId = 807;
+
+            let pokemonId = 0;
+
+            function init() {
+                $("#nextBtn").click(event => {
+                    event.preventDefault();
+                    nextPokemon();
+                });
+
+                $("#prevBtn").click(event => {
+                    event.preventDefault();
+                    prevPokemon();
+                });
+
+                fetchPokemon(minPokemonId);
+
+            }
+            init();
+
+            function fetchPokemon(id) {
+                pokemonId = id;
+                $.ajax({
+                    url: `https://pokeapi.co/api/v2/pokemon/${id}/`,
+                    type: "GET",
+                    // dataType: "json",
+                })
+                    .done((data) => {
+                        console.log(data);
+                        displayPokemon(data);
+                    })
+                    .fail(() => {
+                        console.log("fail");
+                    });
+            }
+
+            function displayPokemon(obj) {
+                let wrapper = document.createElement("div");
+                let name = document.createElement("h2");
+                let imgWrapper = document.createElement("div");
+                let img = document.createElement("img");
+
+                wrapper.className = "dex";
+                imgWrapper.className = "imageWrapper";
+
+                let abilities, moves, types, stats;
+
+                name.textContent = sentenceCase(obj.name);
+                img.src = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png";
+                if (obj.sprites.front_default) {
+                    img.src = obj.sprites.front_default;
+                }
+
+                if (obj.abilities.length > 0) abilities = buildList(obj.abilities, "ability", "Abilities");
+                if (obj.moves.length > 0) moves = buildList(obj.moves, "move", "Moves");
+                if (obj.types.length > 0) types = buildList(obj.types, "type", "Types");
+                if (obj.stats.length > 0) stats = buildList(obj.stats, "stat", "Stats", true);
+                imgWrapper.appendChild(img);
+                wrapper.appendChild(imgWrapper)
+                wrapper.appendChild(name);
+                wrapper.appendChild(abilities);
+                wrapper.appendChild(moves);
+                wrapper.appendChild(types);
+                wrapper.appendChild(stats);
+
+                $("#pokemon").html(wrapper);
+                makeButtons();
+
+            }
+
+            function makeButtons() {
+                let buttons = document.getElementsByTagName("h3");
+                for (let i = 0; i < buttons.length; i++) {
+                    buttons[i].addEventListener("click", event => {
+                        event.currentTarget.nextElementSibling.classList.toggle("hide");
+                        console.log(event.currentTarget);
+                    })
+                }
+            }
+
+            function buildList(arr, key, name, getStats) {
+                if (getStats) {
+
+                }
+                if (arr.length > 0) {
+                    let wrapper = document.createElement("div");
+                    let ul = document.createElement("ul");
+                    let listTitle = document.createElement("h3");
+                    listTitle.textContent = name;
+                    wrapper.className = key;
+                    ul.className = "hide";
+
+                    for (let i = 0; i < arr.length; i++) {
+                        let li = document.createElement("li");
+                        li.textContent = sentenceCase(arr[i][key].name);
+                        if (getStats) {
+                            li.textContent += ": " + arr[i]["base_stat"];
+                        }
+                        ul.appendChild(li);
+                    }
+                    wrapper.appendChild(listTitle);
+                    wrapper.appendChild(ul);
+                    return wrapper;
+                }
+                return null;
+            }
+
+            function sentenceCase(str) {
+                return str.substring(0, 1).toUpperCase() + str.substring(1)
+            }
+
+            function nextPokemon() {
+                if (pokemonId < maxPokemonId) {
+                    fetchPokemon(++pokemonId);
+                } else {
+                    fetchPokemon(minPokemonId);
+                }
+            }
+
+            function prevPokemon() {
+                if (pokemonId > minPokemonId) {
+                    fetchPokemon(--pokemonId);
+                } else {
+                    fetchPokemon(maxPokemonId);
+                }
+            }
+        });
+    </script>
+    <style>
+        body {
+            background-color: #ff2f2f;
+            color: #fff;
+            font-family: sans-serif;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mainWrapper {
+            max-width: 600px;
+            margin: 0 auto;
+            overflow: hidden;
+            border-left: 20px solid #bd0909;
+            border-right: 20px solid #bd0909;
+            min-height: 100vh;
+        }
+
+        ul {
+            font-weight: bold;
+            list-style-type: "+ ";
+        }
+
+        #pokemon {
+            margin: 10px;
+            margin-top: 100px;
+        }
+
+        .ability ul,
+        .move ul,
+        .type ul,
+        .stat ul {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .blueThing {
+            width: 80px;
+            height: 80px;
+            background-color: #6981b9;
+            border-radius: 80px;
+            background: radial-gradient(ellipse at top left, hsl(0, 0%, 100%) 0%, hsl(0, 0%, 100%) 32%, hsl(190.8, 36%, 48.4%) 33%, hsl(221.8, 36.1%, 57.1%) 100%);
+            border: 5px solid #fff;
+            margin: 10px;
+        }
+
+        .blueThing::after {
+            content: "";
+            display: block;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            position: relative;
+            top: 50px;
+            left: 50px;
+            border-radius: 20px;
+        }
+
+        .lineThingWrapper {
+            position: relative;
+            width: 100vw;
+            top: -50px;
+        }
+
+        .header {
+            background: #ff2f2f;
+            width: 100vw;
+            height: 100px;
+            border-bottom: 20px solid #bd0909;
+        }
+
+        .header::after {
+            content: "";
+            background: #ff2f2f;
+            display: block;
+            height: 50px;
+            width: 50vw;
+            transform: skew(-50deg);
+            position: relative;
+            left: -410px;
+            border-bottom: 20px solid #bd0909;
+            border-right: 35px solid #bd0909;
+        }
+
+        .dex {
+            display: grid;
+            grid-template-areas:
+                "img img"
+                "name name"
+                "abilities moves"
+                "types stats"
+        }
+
+        h2 {
+            grid-area: name;
+        }
+
+        .dex img {
+            width: 96px;
+            display: block;
+            margin: 0 auto;
+            transform: scale(3);
+            margin-top: 50px;
+        }
+
+        .dex .imageWrapper {
+            grid-area: img;
+            background: #b4e7ee;
+            border: 20px solid #fff;
+            border-radius: 10px;
+            margin: 10px;
+            height: 200px;
+            box-shadow: 5px 5px 13px -4px rgba(0, 0, 0, 0.75);
+        }
+
+        .ability {
+            grid-area: abilities;
+        }
+
+        .move {
+            grid-area: moves;
+        }
+
+        .type {
+            grid-area: types;
+        }
+
+        .stat {
+            grid-area: stats;
+        }
+
+        h3 {
+            background-color: #608ab3;
+            color: #fff;
+            display: inline-block;
+            width: 200px;
+            height: 100px;
+            text-align: center;
+            padding-top: 10p;
+            vertical-align: middle;
+            line-height: 100px;
+            border-top: 5px solid #fff;
+            border-left: 5px solid #fff;
+            border-right: 5px solid #486d92;
+            border-bottom: 5px solid #486d92;
+            transition: .1s all;
+            user-select: none;
+        }
+
+        h3:hover {
+            cursor: pointer;
+            transform: scale(1.05);
+        }
+
+        .hide {
+            display: none;
+        }
+
+        .btnsWrapper {
+            text-align: center;
+        }
+
+        .btns {
+            border: none;
+            background-color: black;
+            color: white;
+            padding: 20px;
+            border-radius: 13px;
+            margin: 10px;
+            width: 150px;
+            transition: .12s all;
+        }
+
+        .btns:hover {
+            cursor: pointer;
+            background-color: #bd0909;
+        }
+
+        small {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mainWrapper">
+        <div class="header">
+            <div class="blueThing"></div>
+        </div>
+        <div id="pokemon">
+        </div>
+        <div class="btnsWrapper">
+            <button class="btns" id="prevBtn">Previous</button>
+            <button class="btns" id="nextBtn">Next</button>
+        </div>
+        <small>By Victor Heijler</small>
+    </div>
+</body>
+</html>
